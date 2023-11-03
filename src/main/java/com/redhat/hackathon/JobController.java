@@ -6,9 +6,19 @@ import io.micrometer.core.instrument.config.MeterFilterReply;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.quarkus.logging.Log;
 import io.quarkus.runtime.StartupEvent;
+import io.vertx.core.eventbus.DeliveryOptions;
+import io.vertx.core.eventbus.EventBus;
+import io.vertx.core.json.JsonObject;
 import io.vertx.micrometer.backends.BackendRegistries;
+import jakarta.enterprise.event.Event;
 import jakarta.enterprise.event.Observes;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
+
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 @Path("/job")
 public class JobController {
@@ -68,4 +78,11 @@ public class JobController {
                 );
     }
 
+    @Inject
+    EventBus eventBus;
+    @GET
+    public CompletionStage<String> startJob() {
+        eventBus.send("http_1.1_consumer", JsonObject.of("message", UUID.randomUUID().toString()), new DeliveryOptions().setLocalOnly(true));
+        return CompletableFuture.completedFuture(JsonObject.of("success", true).encode());
+    }
 }
