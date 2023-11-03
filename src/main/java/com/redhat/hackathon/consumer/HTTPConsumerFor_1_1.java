@@ -1,37 +1,58 @@
 package com.redhat.hackathon.consumer;
 
 
+import com.redhat.hackathon.HttpRequestSupplier;
+import com.redhat.hackathon.model.HttpRequestAndBodyModel;
+import com.redhat.hackathon.model.RequestModel;
+import io.github.resilience4j.ratelimiter.RateLimiter;
+import io.github.resilience4j.ratelimiter.RateLimiterConfig;
+import io.micrometer.core.instrument.Clock;
 import io.quarkus.logging.Log;
 import io.quarkus.vertx.ConsumeEvent;
 import io.smallrye.common.annotation.RunOnVirtualThread;
-import io.vertx.core.Promise;
+import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpVersion;
-import io.vertx.core.json.JsonObject;
 import io.vertx.core.net.OpenSSLEngineOptions;
 import io.vertx.core.tracing.TracingPolicy;
 import io.vertx.ext.web.client.HttpRequest;
+import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.ext.web.client.WebClient;
 import io.vertx.ext.web.client.WebClientOptions;
-import jakarta.enterprise.context.ApplicationScoped;
+import io.vertx.uritemplate.UriTemplate;
 import jakarta.inject.Inject;
 
+import java.time.Duration;
 import java.util.Set;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
-@ApplicationScoped
 public class HTTPConsumerFor_1_1 {
 
     @Inject
     Vertx vertx;
+    Supplier<HttpRequestAndBodyModel> httpRequestSupplier;
 
-    @ConsumeEvent(value="http_1.1_consumer")
+    private static AtomicInteger initCounter = new AtomicInteger(0);
+    private static RateLimiter rateLimiter = null;
+
+    private long endTime;
+
+    @ConsumeEvent(value = "http_1.1_consumer")
     @RunOnVirtualThread
-    public void consume(JsonObject jsonObject) {
+    public void consume(RequestModel requestModel) {
+        if (initCounter.incrementAndGet() == 1) {
+            rateLimiter = RateLimiter.of(requestModel.getIdentifier(), RateLimiterConfig.custom()
+                    .limitForPeriod(requestModel.getRequestPerSecond())
+                    .limitRefreshPeriod(Duration.ofSeconds(1))
+                    .timeoutDuration(Duration.ofSeconds(5))
+                    .build());
+        }
+        // Webclient needs to be created in consume method.
+        // We want to run as many connections as specified in maxConnectiosn to ensure that we have that many connection open
+        // As this is for HTTP 1.1, we do not want to upgrade to HTTP/2 even though the server supports it
         WebClient webClient = WebClient.create(vertx, new WebClientOptions()
                 .setUseAlpn(false)
                 .setTcpFastOpen(true)
@@ -42,30 +63,69 @@ public class HTTPConsumerFor_1_1 {
                 .setEnabledSecureTransportProtocols(Set.of("TLSv1.2"))
                 .setSslEngineOptions(new OpenSSLEngineOptions().setUseWorkerThread(true).setSessionCacheEnabled(false))
                 .setMaxPoolSize(1));
-        Supplier<HttpRequest<Buffer>> supplier = new Supplier<HttpRequest<Buffer>>() {
+        httpRequestSupplier = new HttpRequestSupplier() {
+            final int listSize = requestModel.getHttpRequests().size();
+            int counter = 0;
+
             @Override
-            public HttpRequest<Buffer> get() {
-                return webClient.request(HttpMethod.GET,
-                        8081,
-                        "localhost",
-                        "/healthz"
-                )
-                        .putHeader("x-id", "1")
-                        .putHeader("x-path", "/healthz");
+            public HttpRequestAndBodyModel get() {
+                int counterModListSize = counter % listSize;
+                HttpRequest<Buffer> bufferHttpRequest = webClient.request(
+                        HttpMethod.valueOf(requestModel.getHttpRequests().get(counterModListSize).method()),
+                        requestModel.getPort(),
+                        requestModel.getHostname(),
+                        UriTemplate.of(requestModel.getHttpRequests().get(counterModListSize).uri()));
+                //Log.info("x-id: " + requestModel.getIdentifier());
+                //Log.info("requestModel.getHttpRequests().get(counterModListSize).uri(): " + requestModel.getHttpRequests().get(counterModListSize).uri());
+                bufferHttpRequest.putHeader("x-id", requestModel.getIdentifier());
+                bufferHttpRequest.putHeader("x-path", requestModel.getHttpRequests().get(counterModListSize).uri());
+                // Apply the query parameters
+                if (requestModel.getHttpRequests().get(counterModListSize).queryParams() != null && !requestModel.getHttpRequests().get(counterModListSize).queryParams().isEmpty()) {
+                    requestModel.getHttpRequests().get(counterModListSize).queryParams().forEach(bufferHttpRequest::addQueryParam);
+                }
+                // Apply the path params
+                if (requestModel.getHttpRequests().get(counterModListSize).pathParams() != null && !requestModel.getHttpRequests().get(counterModListSize).pathParams().isEmpty()) {
+                    requestModel.getHttpRequests().get(counterModListSize).pathParams().forEach(bufferHttpRequest::setTemplateParam);
+                }
+                // Add the headers as specified in the request
+                if (requestModel.getHttpRequests().get(counterModListSize).headers() != null && !requestModel.getHttpRequests().get(counterModListSize).headers().isEmpty()) {
+                    requestModel.getHttpRequests().get(counterModListSize).headers().forEach(bufferHttpRequest::putHeader);
+                }
+                // SSL
+                bufferHttpRequest.ssl(requestModel.isSsl());
+                Buffer body = Buffer.buffer();
+                // Apply the body if present
+                if (requestModel.getHttpRequests().get(counterModListSize).body() != null) {
+                    body = requestModel.getHttpRequests().get(counterModListSize).body();
+                }
+                if (counter++ == listSize) {
+                    counter = 0;
+                }
+                return new HttpRequestAndBodyModel(bufferHttpRequest, body);
+
             }
         };
-        //Log.info("consume | The thread name is: " + Thread.currentThread().getName());
-        runTest(supplier);
+        endTime = requestModel.getEndTime();
+        Log.info("Current time: " + System.currentTimeMillis());
+        Log.info("End Time: " + System.currentTimeMillis());
+
+        runTest();
 
     }
-    @RunOnVirtualThread
-    void runTest(Supplier<HttpRequest<Buffer>> supplier) {
-        //Log.info("runTest | The thread name is: " + Thread.currentThread().getName());
-        Promise promise = Promise.promise();
-        supplier.get().send().onComplete(promise);
-        promise.future().onComplete(h -> {
-            Thread.ofVirtual().start(() -> runTest(supplier));
-        });
 
+    void runTest() {
+        //Log.info("runTest | The thread name is: " + Thread.currentThread().getName());
+        if (endTime > System.currentTimeMillis()) {
+            rateLimiter.acquirePermission(); // This will run on virtual thread
+            HttpRequestAndBodyModel httpRequestAndBodyModel = httpRequestSupplier.get();
+            // This will run on event loop
+            Future<HttpResponse<Buffer>> future = httpRequestAndBodyModel
+                    .httpRequest()
+                    .sendBuffer(httpRequestAndBodyModel.body());
+            // The runTest needs to be called on virtual thread as the future completes on event loop, and we want not to block event loop
+            // There is a context switching cost associated but that is something that can be improved upon by refactoring the code
+            // Kotlin coroutine might be more powerful here, but we want to try Java 21 virtual thread as part of hackathon
+            future.onComplete(h -> Thread.ofVirtual().start(this::runTest));
+        }
     }
 }

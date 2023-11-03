@@ -2,8 +2,12 @@ package com.redhat.hackathon.customizer;
 
 import com.redhat.hackathon.metrics.MetricsUtil;
 import io.micrometer.core.instrument.Clock;
+import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
+import io.micrometer.core.instrument.config.MeterFilter;
+import io.micrometer.core.instrument.config.MeterFilterReply;
+import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.step.StepRegistryConfig;
@@ -25,6 +29,9 @@ import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * Add the custom micrometer backend registry during application startup via Recorder
+ */
 @ApplicationScoped
 public class VertxOptionsCustomizerApp implements VertxOptionsCustomizer {
     @ConfigProperty(name = "stepDuration", defaultValue = "10")
@@ -88,6 +95,9 @@ public class VertxOptionsCustomizerApp implements VertxOptionsCustomizer {
                         .addDisabledMetricsCategory(MetricsDomain.EVENT_BUS)
                         .addDisabledMetricsCategory(MetricsDomain.HTTP_SERVER)
                         .addDisabledMetricsCategory(MetricsDomain.VERTICLES)
+                        .addDisabledMetricsCategory(MetricsDomain.DATAGRAM_SOCKET)
+                        .addDisabledMetricsCategory(MetricsDomain.NAMED_POOLS)
+                        .addDisabledMetricsCategory(MetricsDomain.NET_SERVER)
                         .setClientRequestTagsProvider(req -> List.of(Tag.of("id", req.headers().get("x-id")), Tag.of("path", req.headers().get("x-path"))))
                         .setLabels(Set.of(Label.HTTP_PATH, Label.HTTP_ROUTE, Label.HTTP_CODE, Label.HTTP_METHOD))
                         .setMicrometerRegistry(compositeMeterRegistry)
