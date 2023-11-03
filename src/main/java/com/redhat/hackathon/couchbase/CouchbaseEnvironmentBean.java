@@ -1,4 +1,4 @@
-package hackathon.couchbase;
+package com.redhat.hackathon.couchbase;
 
 import com.couchbase.client.core.env.IoConfig;
 import com.couchbase.client.java.env.ClusterEnvironment;

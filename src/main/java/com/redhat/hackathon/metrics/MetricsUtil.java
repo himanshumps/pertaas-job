@@ -1,4 +1,4 @@
-package hackathon.metrics;
+package com.redhat.hackathon.metrics;
 
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.distribution.HistogramSnapshot;

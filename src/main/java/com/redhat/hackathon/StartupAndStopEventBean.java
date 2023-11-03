@@ -1,4 +1,4 @@
-package hackathon;
+package com.redhat.hackathon;
 
 import com.couchbase.client.java.Bucket;
 import com.couchbase.client.java.Cluster;
