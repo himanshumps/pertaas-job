@@ -59,7 +59,6 @@ public class HTTPConsumerFor_1_1 {
                 .setTcpFastOpen(true)
                 .setTcpQuickAck(true)
                 .setTcpKeepAlive(true)
-                .setReusePort(false)
                 .setTracingPolicy(TracingPolicy.IGNORE)
                 .setProtocolVersion(HttpVersion.HTTP_1_1)
                 .setEnabledSecureTransportProtocols(Set.of("TLSv1.2"))
