@@ -5,7 +5,6 @@ import io.vertx.core.http.HttpVersion;
 import java.util.List;
 
 public class RequestModel {
-    String identifier;
     String key_tx;
     String protocol;
     String hostname;
@@ -23,14 +22,6 @@ public class RequestModel {
     long endTime;
     HttpVersion httpVersion;
     int requestPerSecond;
-
-    public String getIdentifier() {
-        return identifier;
-    }
-
-    public void setIdentifier(String identifier) {
-        this.identifier = identifier;
-    }
 
     public String getKey_tx() {
         return key_tx;
