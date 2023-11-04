@@ -2,15 +2,14 @@ package com.redhat.hackathon.customizer;
 
 import com.redhat.hackathon.metrics.MetricsUtil;
 import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
 import io.micrometer.core.instrument.config.MeterFilter;
-import io.micrometer.core.instrument.config.MeterFilterReply;
-import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.step.StepRegistryConfig;
+import io.micrometer.prometheus.PrometheusConfig;
+import io.micrometer.prometheus.PrometheusMeterRegistry;
 import io.quarkus.logging.Log;
 import io.quarkus.vertx.VertxOptionsCustomizer;
 import io.vertx.core.VertxOptions;
@@ -21,6 +20,8 @@ import io.vertx.micrometer.MetricsDomain;
 import io.vertx.micrometer.MicrometerMetricsOptions;
 import io.vertx.micrometer.backends.BackendRegistries;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Singleton;
+import jakarta.ws.rs.Produces;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import java.time.Duration;
@@ -36,6 +37,9 @@ import java.util.concurrent.TimeUnit;
 public class VertxOptionsCustomizerApp implements VertxOptionsCustomizer {
     @ConfigProperty(name = "stepDuration", defaultValue = "10")
     int stepDuration;
+
+    @ConfigProperty(name = "jobId")
+    String jobId;
 
     @Override
     public void accept(VertxOptions vertxOptions) {
@@ -78,6 +82,7 @@ public class VertxOptionsCustomizerApp implements VertxOptionsCustomizer {
                 return TimeUnit.MILLISECONDS;
             }
         };
+
         final SimpleMeterRegistry simpleMeterRegistry = new SimpleMeterRegistry() {
             @Override
             protected TimeUnit getBaseTimeUnit() {
@@ -87,7 +92,12 @@ public class VertxOptionsCustomizerApp implements VertxOptionsCustomizer {
         CompositeMeterRegistry compositeMeterRegistry = new CompositeMeterRegistry();
         compositeMeterRegistry.add(stepMeterRegistry);
         compositeMeterRegistry.add(simpleMeterRegistry);
+        compositeMeterRegistry.add(new PrometheusMeterRegistry(PrometheusConfig.DEFAULT));
+        compositeMeterRegistry.config().commonTags(List.of(Tag.of("id", jobId)));
+        compositeMeterRegistry.getRegistries().forEach(meterRegistry -> meterRegistry.config().commonTags(List.of(Tag.of("jobId", jobId))));
         stepMeterRegistry.start(Executors.defaultThreadFactory());
+        // The whole idea of the pertaas tool is to get the metrics
+        // Using programmatic access to metrics rather than injection
         vertxOptions
                 .setEventLoopPoolSize(CpuCoreSensor.availableProcessors() * 2)
                 .setPreferNativeTransport(true)
@@ -98,7 +108,7 @@ public class VertxOptionsCustomizerApp implements VertxOptionsCustomizer {
                         .addDisabledMetricsCategory(MetricsDomain.DATAGRAM_SOCKET)
                         .addDisabledMetricsCategory(MetricsDomain.NAMED_POOLS)
                         .addDisabledMetricsCategory(MetricsDomain.NET_SERVER)
-                        .setClientRequestTagsProvider(req -> List.of(Tag.of("id", req.headers().get("x-id")), Tag.of("path", req.headers().get("x-path"))))
+                        .setClientRequestTagsProvider(req -> List.of(Tag.of("path", req.headers().get("x-path"))))
                         .setLabels(Set.of(Label.HTTP_PATH, Label.HTTP_ROUTE, Label.HTTP_CODE, Label.HTTP_METHOD))
                         .setMicrometerRegistry(compositeMeterRegistry)
                         .setRegistryName("test")

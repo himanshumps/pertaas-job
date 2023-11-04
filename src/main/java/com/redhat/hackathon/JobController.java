@@ -43,33 +43,18 @@ public class JobController {
 
                             @Override
                             public DistributionStatisticConfig configure(Meter.Id id, DistributionStatisticConfig config) {
-
-                                if ("vertx.http.client.active.requests".startsWith(id.getName())) {
+                                if (id.getTag("id") != null) {
                                     return DistributionStatisticConfig.builder()
-                                            .percentilesHistogram(false)
+                                            .percentilesHistogram(true)
+                                            .percentiles(0., 0.33, 0.50, 0.66, 0.90, 0.95, 0.99, 0.999, 0.9999)
                                             .build()
                                             .merge(config);
-                                } else if ("vertx.http.client.request.bytes".startsWith(id.getName())) {
-                                    return DistributionStatisticConfig.builder()
-                                            .percentilesHistogram(false)
-                                            .build()
-                                            .merge(config);
-                                } else if ("vertx.http.client.response.bytes".startsWith(id.getName())) {
-                                    return DistributionStatisticConfig.builder()
-                                            .percentilesHistogram(false)
-                                            .build()
-                                            .merge(config);
-                                } else if ("vertx.http.client.requests".startsWith(id.getName())) {
+                                } else {
                                     return DistributionStatisticConfig.builder()
                                             .percentilesHistogram(false)
                                             .build()
                                             .merge(config);
                                 }
-                                return DistributionStatisticConfig.builder()
-                                        .percentilesHistogram(true)
-                                        .percentiles(0., 0.33, 0.50, 0.66, 0.90, 0.95, 0.99, 0.999, 0.9999)
-                                        .build()
-                                        .merge(config);
                             }
                         }
                 );
@@ -77,6 +62,7 @@ public class JobController {
 
     @Inject
     EventBus eventBus;
+
     @GET
     public CompletionStage<String> startJob() {
         RequestModel requestModel = new RequestModel();
@@ -84,11 +70,14 @@ public class JobController {
         requestModel.setPort(8081);
         requestModel.setRequestPerSecond(10000000);
         requestModel.setIdentifier("job1");
+        requestModel.setMaxConnections(10);
         requestModel.setHttpRequests(List.of(
                 new HttpRequestModel("GET", "/healthz", null, null, null, null)
         ));
         requestModel.setEndTime(System.currentTimeMillis() + Duration.ofMinutes(1).toMillis());
-        eventBus.send("http_1.1_consumer", requestModel, new DeliveryOptions().setLocalOnly(true));
+        for (int i = 0; i < requestModel.getMaxConnections(); i++) {
+            eventBus.send("http_1.1_consumer", requestModel, new DeliveryOptions().setLocalOnly(true));
+        }
         return CompletableFuture.completedFuture(JsonObject.of("success", true).encode());
     }
 }

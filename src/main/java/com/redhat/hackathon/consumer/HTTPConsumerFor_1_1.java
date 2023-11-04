@@ -75,9 +75,6 @@ public class HTTPConsumerFor_1_1 {
                         requestModel.getPort(),
                         requestModel.getHostname(),
                         UriTemplate.of(requestModel.getHttpRequests().get(counterModListSize).uri()));
-                //Log.info("x-id: " + requestModel.getIdentifier());
-                //Log.info("requestModel.getHttpRequests().get(counterModListSize).uri(): " + requestModel.getHttpRequests().get(counterModListSize).uri());
-                bufferHttpRequest.putHeader("x-id", requestModel.getIdentifier());
                 bufferHttpRequest.putHeader("x-path", requestModel.getHttpRequests().get(counterModListSize).uri());
                 // Apply the query parameters
                 if (requestModel.getHttpRequests().get(counterModListSize).queryParams() != null && !requestModel.getHttpRequests().get(counterModListSize).queryParams().isEmpty()) {
