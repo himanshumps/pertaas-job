@@ -35,7 +35,7 @@ public class JobController {
                             @Override
                             public MeterFilterReply accept(Meter.Id meterId) {
                                 // Only allow the ones with id tag as those are the ones that we are interested in. If additional metrics is needed, it can be enabled or disabled here
-                                if (meterId.getTag("id") == null) {
+                                if (meterId.getTag("jobId") == null) {
                                     return MeterFilterReply.DENY;
                                 }
                                 return MeterFilter.super.accept(meterId);
@@ -43,7 +43,7 @@ public class JobController {
 
                             @Override
                             public DistributionStatisticConfig configure(Meter.Id id, DistributionStatisticConfig config) {
-                                if (id.getTag("id") != null) {
+                                if (id.getTag("jobId") != null) {
                                     return DistributionStatisticConfig.builder()
                                             .percentilesHistogram(true)
                                             .percentiles(0., 0.33, 0.50, 0.66, 0.90, 0.95, 0.99, 0.999, 0.9999)
