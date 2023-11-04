@@ -1,5 +1,6 @@
 package com.redhat.hackathon;
 
+import com.couchbase.client.core.io.netty.HttpProtocol;
 import com.redhat.hackathon.metrics.MetricsUtil;
 import com.redhat.hackathon.model.RequestModel;
 import io.micrometer.core.instrument.Meter;
@@ -15,6 +16,7 @@ import io.quarkus.runtime.annotations.QuarkusMain;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.core.eventbus.EventBus;
+import io.vertx.core.http.HttpVersion;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
 import jakarta.inject.Inject;
@@ -69,8 +71,15 @@ public class ApplicationMain implements QuarkusApplication {
         );
     RequestModel requestModel = Json.decodeValue(requestJson, RequestModel.class);
     requestModel.setEndTime(System.currentTimeMillis() + Duration.ofSeconds(requestModel.getRunDurationInSeconds()).toMillis());
+    String consumer = "http_1.1_consumer";
+    if(requestModel.getHttpVersion() == null) {
+      requestModel.setHttpVersion(HttpVersion.HTTP_1_1);
+    }
+    if(requestModel.getHttpVersion().equals(HttpVersion.HTTP_2)) {
+      consumer = "http_2_consumer";
+    }
     for (int i = 0; i < requestModel.getMaxConnections(); i++) {
-      eventBus.send("http_1.1_consumer", requestModel, new DeliveryOptions().setLocalOnly(true));
+      eventBus.send(consumer, requestModel, new DeliveryOptions().setLocalOnly(true));
     }
     vertx.setTimer(Duration.ofSeconds(requestModel.getRunDurationInSeconds() + 5).toMillis(), handler -> {
       Log.info("SimpleMeterRegistry response: ");

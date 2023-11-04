@@ -1,27 +1,32 @@
 package com.redhat.hackathon.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import io.vertx.core.http.Http2Settings;
+import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.http.HttpVersion;
 
 import java.util.List;
-
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class RequestModel {
+
     String key_tx;
     String protocol;
     String hostname;
     int counter;
     int port;
     boolean ssl = false;
-    int maxStreams;
-    int headerTableSize;
-    int initialWindowSize;
-    int maxFrameSize;
-    int headerListSize;
+    private long headerTableSize = Http2Settings.DEFAULT_HEADER_TABLE_SIZE;
+    private long maxConcurrentStreams = HttpServerOptions.DEFAULT_INITIAL_SETTINGS_MAX_CONCURRENT_STREAMS;
+    private int initialWindowSize = Http2Settings.DEFAULT_INITIAL_WINDOW_SIZE;
+    private int maxFrameSize = Http2Settings.DEFAULT_MAX_FRAME_SIZE;
+    private long maxHeaderListSize = Http2Settings.DEFAULT_MAX_HEADER_LIST_SIZE;
     int maxConnections;
     int runDurationInSeconds;
     long startTime;
     long endTime;
     HttpVersion httpVersion;
     int requestPerSecond;
+    List<HttpRequestModel> httpRequests;
 
     public String getKey_tx() {
         return key_tx;
@@ -71,20 +76,20 @@ public class RequestModel {
         this.ssl = ssl;
     }
 
-    public int getMaxStreams() {
-        return maxStreams;
-    }
-
-    public void setMaxStreams(int maxStreams) {
-        this.maxStreams = maxStreams;
-    }
-
-    public int getHeaderTableSize() {
+    public long getHeaderTableSize() {
         return headerTableSize;
     }
 
-    public void setHeaderTableSize(int headerTableSize) {
+    public void setHeaderTableSize(long headerTableSize) {
         this.headerTableSize = headerTableSize;
+    }
+
+    public long getMaxConcurrentStreams() {
+        return maxConcurrentStreams;
+    }
+
+    public void setMaxConcurrentStreams(long maxConcurrentStreams) {
+        this.maxConcurrentStreams = maxConcurrentStreams;
     }
 
     public int getInitialWindowSize() {
@@ -103,12 +108,12 @@ public class RequestModel {
         this.maxFrameSize = maxFrameSize;
     }
 
-    public int getHeaderListSize() {
-        return headerListSize;
+    public long getMaxHeaderListSize() {
+        return maxHeaderListSize;
     }
 
-    public void setHeaderListSize(int headerListSize) {
-        this.headerListSize = headerListSize;
+    public void setMaxHeaderListSize(long maxHeaderListSize) {
+        this.maxHeaderListSize = maxHeaderListSize;
     }
 
     public int getMaxConnections() {
@@ -166,6 +171,4 @@ public class RequestModel {
     public void setHttpRequests(List<HttpRequestModel> httpRequests) {
         this.httpRequests = httpRequests;
     }
-
-    List<HttpRequestModel> httpRequests;
 }
