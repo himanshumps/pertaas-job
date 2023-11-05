@@ -1,0 +1,27 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Values.jobId }}
+  labels:
+    pertaas-job: "true"
+spec:
+  template:
+    metadata:
+      name: {{ .Values.jobId }}
+      labels:
+        pertaas-job: "true"
+    spec:
+      containers:
+        - name: job
+          image: image-registry.openshift-image-registry.svc:5000/himanshumps-1-dev/pertaas-{{ .Values.jobId }}
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+              name: web
+          env:
+            - name: JOB_ID
+              value: {{ .Values.jobId }}
+            - name: REQUEST_JSON
+              value: >-
+                {{ .Values.requestJson | toJson }}
+      restartPolicy: Never
