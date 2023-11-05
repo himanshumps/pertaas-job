@@ -13,7 +13,7 @@ spec:
     spec:
       containers:
         - name: job
-          image: image-registry.openshift-image-registry.svc:5000/himanshumps-1-dev/pertaas-{{ .Values.jobId }}
+          image: image-registry.openshift-image-registry.svc:5000/{{ .Release.Namespace }}/pertaas-{{ .Values.jobId }}
           ports:
             - containerPort: 8080
               protocol: TCP
@@ -23,5 +23,5 @@ spec:
               value: {{ .Values.jobId }}
             - name: REQUEST_JSON
               value: >-
-                {{ .Values.requestJson | toJson }}
+                {{ .Files.Get (printf "%s" .Values.fileName) }}
       restartPolicy: Never
