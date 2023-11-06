@@ -18,6 +18,9 @@ spec:
             - containerPort: 8080
               protocol: TCP
               name: web
+          envFrom:
+            - secretRef:
+                name: couchbase-secret
           env:
             - name: JOB_ID
               value: {{ .Values.jobId }}
