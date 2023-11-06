@@ -1,6 +1,6 @@
 package com.redhat.hackathon;
 
-import com.couchbase.client.core.io.netty.HttpProtocol;
+import com.couchbase.client.java.Bucket;
 import com.redhat.hackathon.metrics.MetricsUtil;
 import com.redhat.hackathon.model.RequestModel;
 import io.micrometer.core.instrument.Meter;
@@ -23,6 +23,7 @@ import jakarta.inject.Inject;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import java.time.Duration;
+import java.time.Instant;
 
 @QuarkusMain
 public class ApplicationMain implements QuarkusApplication {
@@ -34,6 +35,12 @@ public class ApplicationMain implements QuarkusApplication {
 
   @Inject
   Vertx vertx;
+
+  @Inject
+  Bucket bucket;
+
+  @ConfigProperty(name = "jobId")
+  String jobId;
 
   @Override
   public int run(String... args) throws Exception {
@@ -72,10 +79,10 @@ public class ApplicationMain implements QuarkusApplication {
     RequestModel requestModel = Json.decodeValue(requestJson, RequestModel.class);
     requestModel.setEndTime(System.currentTimeMillis() + Duration.ofSeconds(requestModel.getRunDurationInSeconds()).toMillis());
     String consumer = "http_1.1_consumer";
-    if(requestModel.getHttpVersion() == null) {
+    if (requestModel.getHttpVersion() == null) {
       requestModel.setHttpVersion(HttpVersion.HTTP_1_1);
     }
-    if(requestModel.getHttpVersion().equals(HttpVersion.HTTP_2)) {
+    if (requestModel.getHttpVersion().equals(HttpVersion.HTTP_2)) {
       consumer = "http_2_consumer";
     }
     for (int i = 0; i < requestModel.getMaxConnections(); i++) {
@@ -84,14 +91,19 @@ public class ApplicationMain implements QuarkusApplication {
     vertx.setTimer(Duration.ofSeconds(requestModel.getRunDurationInSeconds() + 5).toMillis(), handler -> {
       Log.info("SimpleMeterRegistry response: ");
       Metrics.globalRegistry.getRegistries().forEach(registry -> {
-        if(registry instanceof SimpleMeterRegistry) {
+        if (registry instanceof SimpleMeterRegistry) {
+          Instant instant = Instant.now();
+          String key_tx = jobId + "::" + instant;
           JsonObject jsonObject = MetricsUtil.snapshot(registry, null);
-          if (!jsonObject.isEmpty()) {
-            jsonObject.put("registry", "SimpleMeterRegistry");
-            Log.info(jsonObject.encode());
-            // TODO: upsert in couchbase as well
-            Quarkus.asyncExit();
-          }
+
+          jsonObject.put("registry", "SimpleMeterRegistry");
+          jsonObject.put("key_tx", key_tx);
+          // Blocking insert as we do not wish to lose this message before shutting down the application
+          bucket.defaultCollection().upsert(key_tx, jsonObject);
+          Log.info(jsonObject.encode());
+          // TODO: upsert in couchbase as well
+          Quarkus.asyncExit();
+
         }
       });
     });

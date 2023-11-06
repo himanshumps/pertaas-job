@@ -22,6 +22,6 @@ spec:
             - name: JOB_ID
               value: {{ .Values.jobId }}
             - name: REQUEST_JSON
-              value: >-
+              value: |
                 {{ .Files.Get (printf "%s" .Values.fileName) }}
       restartPolicy: Never

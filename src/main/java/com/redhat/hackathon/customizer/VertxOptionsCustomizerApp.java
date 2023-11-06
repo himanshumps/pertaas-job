@@ -1,5 +1,6 @@
 package com.redhat.hackathon.customizer;
 
+import com.couchbase.client.java.Bucket;
 import com.redhat.hackathon.metrics.MetricsUtil;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.Metrics;
@@ -21,9 +22,11 @@ import io.vertx.micrometer.Label;
 import io.vertx.micrometer.MetricsDomain;
 import io.vertx.micrometer.MicrometerMetricsOptions;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Executors;
@@ -39,6 +42,9 @@ public class VertxOptionsCustomizerApp implements VertxOptionsCustomizer {
 
   @ConfigProperty(name = "jobId")
   String jobId;
+
+  @Inject
+  Bucket bucket;
 
   @Override
   public void accept(VertxOptions vertxOptions) {
@@ -61,13 +67,15 @@ public class VertxOptionsCustomizerApp implements VertxOptionsCustomizer {
     final StepMeterRegistry stepMeterRegistry = new StepMeterRegistry(stepRegistryConfig, Clock.SYSTEM) {
       @Override
       protected void publish() {
-
+        Instant instant = Instant.now();
+        String key_tx = jobId + "::" + instant;
         JsonObject jsonObject = MetricsUtil.snapshot(this, null);
-        if (!jsonObject.isEmpty()) {
-          jsonObject.put("registry", "StepMeterRegistry");
-          Log.info(jsonObject.encode());
-          // TODO: upsert in couchbase as well
-        }
+        jsonObject.put("registry", "StepMeterRegistry");
+        jsonObject.put("key_tx", key_tx);
+        bucket.reactive().defaultCollection().upsert(key_tx, jsonObject).subscribe();
+        Log.info(jsonObject.encode());
+        // TODO: upsert in couchbase as well
+
       }
 
       @Override
@@ -83,7 +91,7 @@ public class VertxOptionsCustomizerApp implements VertxOptionsCustomizer {
 
       @Override
       public Duration step() {
-        return Duration.ofMinutes(1);
+        return Duration.ofSeconds(1);
       }
 
       @Override
