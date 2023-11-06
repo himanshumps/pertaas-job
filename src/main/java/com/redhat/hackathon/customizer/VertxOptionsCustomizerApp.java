@@ -89,7 +89,7 @@ public class VertxOptionsCustomizerApp implements VertxOptionsCustomizer {
 
       @Override
       public Duration step() {
-        return Duration.ofSeconds(1);
+        return Duration.ofSeconds(5);
       }
 
       @Override
