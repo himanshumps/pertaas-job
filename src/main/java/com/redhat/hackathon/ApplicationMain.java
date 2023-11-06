@@ -99,7 +99,7 @@ public class ApplicationMain implements QuarkusApplication {
           jsonObject.put("registry", "SimpleMeterRegistry");
           jsonObject.put("key_tx", key_tx);
           // Blocking insert as we do not wish to lose this message before shutting down the application
-          bucket.defaultCollection().upsert(key_tx, com.couchbase.client.java.json.JsonObject.from(jsonObject.getMap()));
+          bucket.defaultCollection().upsert(key_tx, com.couchbase.client.java.json.JsonObject.fromJson(jsonObject.encode()));
           Log.info(jsonObject.encode());
           // TODO: upsert in couchbase as well
           Quarkus.asyncExit();

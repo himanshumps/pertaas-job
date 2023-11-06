@@ -72,7 +72,7 @@ public class VertxOptionsCustomizerApp implements VertxOptionsCustomizer {
         JsonObject jsonObject = MetricsUtil.snapshot(this, null);
         jsonObject.put("registry", "StepMeterRegistry");
         jsonObject.put("key_tx", key_tx);
-        bucket.reactive().defaultCollection().upsert(key_tx, com.couchbase.client.java.json.JsonObject.from(jsonObject.getMap())).subscribe();
+        bucket.reactive().defaultCollection().upsert(key_tx, com.couchbase.client.java.json.JsonObject.fromJson(jsonObject.encode())).subscribe();
         Log.info(jsonObject.encode());
         // TODO: upsert in couchbase as well
 
