@@ -12,6 +12,7 @@ import io.smallrye.common.annotation.RunOnVirtualThread;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
+import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpVersion;
 import io.vertx.core.net.OpenSSLEngineOptions;
@@ -125,11 +126,19 @@ public class HTTPConsumerFor_1_1 {
             // Kotlin coroutine might be more powerful here, but we want to try Java 21 virtual thread as part of hackathon
             future.onComplete(h -> Thread.ofVirtual().start(() -> runTest(webClient, httpRequestSupplier)));
         } else {
-            try {
-                webClient.close();
-            } catch (Exception ignored) {
-                // Ignoring the exception as there might be in flight requests.
-            }
+            HttpRequestAndBodyModel httpRequestAndBodyModel = httpRequestSupplier.get();
+            // Sending last message with connection close to cleanup the underlying socket connection
+            httpRequestAndBodyModel
+                .httpRequest()
+                .putHeader(HttpHeaders.CONNECTION.toString(), "close")
+                .sendBuffer(httpRequestAndBodyModel.body())
+                .onComplete(h -> {
+                    try {
+                        webClient.close();
+                    } catch (Exception ignored) {
+                        // Ignoring the exception as there might be in flight requests.
+                    }
+                });
 
         }
     }
