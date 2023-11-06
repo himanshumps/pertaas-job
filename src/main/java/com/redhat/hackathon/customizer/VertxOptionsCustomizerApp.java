@@ -67,15 +67,17 @@ public class VertxOptionsCustomizerApp implements VertxOptionsCustomizer {
     final StepMeterRegistry stepMeterRegistry = new StepMeterRegistry(stepRegistryConfig, Clock.SYSTEM) {
       @Override
       protected void publish() {
-        Instant instant = Instant.now();
-        String key_tx = jobId + "::" + instant;
-        JsonObject jsonObject = MetricsUtil.snapshot(this, null);
-        jsonObject.put("registry", "StepMeterRegistry");
-        jsonObject.put("key_tx", key_tx);
-        bucket.reactive().defaultCollection().upsert(key_tx, com.couchbase.client.java.json.JsonObject.from(jsonObject.getMap())).subscribe();
-        Log.info(jsonObject.encode());
-        // TODO: upsert in couchbase as well
-
+        Metrics.globalRegistry.getRegistries().forEach(registry -> {
+          if (registry instanceof StepMeterRegistry) {
+            Instant instant = Instant.now();
+            String key_tx = jobId + "::" + instant;
+            JsonObject jsonObject = MetricsUtil.snapshot(this, null);
+            jsonObject.put("registry", "StepMeterRegistry");
+            jsonObject.put("key_tx", key_tx);
+            Log.info(jsonObject.encode());
+            bucket.reactive().defaultCollection().upsert(key_tx, com.couchbase.client.java.json.JsonObject.fromJson(jsonObject.encode())).subscribe();
+          }
+        });
       }
 
       @Override
