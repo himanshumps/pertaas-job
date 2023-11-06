@@ -108,10 +108,10 @@ public class HTTPConsumerFor_1_1 {
             }
         };
         endTime = requestModel.getEndTime();
-        runTest(httpRequestSupplier);
+        runTest(webClient, httpRequestSupplier);
     }
 
-    void runTest(HttpRequestSupplier httpRequestSupplier) {
+    void runTest(WebClient webClient, HttpRequestSupplier httpRequestSupplier) {
         //Log.info("runTest | The thread name is: " + Thread.currentThread().getName());
         if (endTime > System.currentTimeMillis()) {
             rateLimiter.acquirePermission(); // This will run on virtual thread
@@ -123,7 +123,14 @@ public class HTTPConsumerFor_1_1 {
             // The runTest needs to be called on virtual thread as the future completes on event loop, and we want not to block event loop
             // There is a context switching cost associated but that is something that can be improved upon by refactoring the code
             // Kotlin coroutine might be more powerful here, but we want to try Java 21 virtual thread as part of hackathon
-            future.onComplete(h -> Thread.ofVirtual().start(() -> runTest(httpRequestSupplier)));
+            future.onComplete(h -> Thread.ofVirtual().start(() -> runTest(webClient, httpRequestSupplier)));
+        } else {
+            try {
+                webClient.close();
+            } catch (Exception ignored) {
+                // Ignoring the exception as there might be in flight requests.
+            }
+
         }
     }
 }
