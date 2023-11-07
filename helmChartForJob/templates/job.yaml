@@ -25,7 +25,7 @@ spec:
             - name: JOB_ID
               value: {{ .Values.jobId }}
             - name: STEP_DURATION
-              value: {{ .Values.stepDuration }}
+              value: {{ quote .Values.stepDuration }}
             - name: REQUEST_JSON
               value: |
                 {{ .Files.Get (printf "%s" .Values.fileName) }}
