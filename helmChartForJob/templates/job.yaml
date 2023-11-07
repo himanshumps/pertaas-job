@@ -24,7 +24,16 @@ spec:
           env:
             - name: JOB_ID
               value: {{ .Values.jobId }}
+            - name: STEP_DURATION
+              value: {{ .Values.stepDuration }}
             - name: REQUEST_JSON
               value: |
                 {{ .Files.Get (printf "%s" .Values.fileName) }}
+          resources:
+            requests:
+              cpu: "{{ .Values.cpu }}m"
+              ram: "{{ .Values.ram }}Mi"
+            limits:
+              cpu: "{{ .Values.cpu }}m"
+              ram: "{{ .Values.ram }}Mi"
       restartPolicy: Never
