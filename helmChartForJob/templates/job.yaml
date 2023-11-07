@@ -32,8 +32,8 @@ spec:
           resources:
             requests:
               cpu: {{ quote .Values.cpu }}
-              ram: {{ quote .Values.ram }}
+              memory: {{ quote .Values.ram }}
             limits:
               cpu: {{ quote .Values.cpu }}
-              ram: {{ quote .Values.ram }}
+              memory: {{ quote .Values.ram }}
       restartPolicy: Never
