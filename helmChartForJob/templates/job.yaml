@@ -31,9 +31,9 @@ spec:
                 {{ .Files.Get (printf "%s" .Values.fileName) }}
           resources:
             requests:
-              cpu: "{{ .Values.cpu }}m"
-              ram: "{{ .Values.ram }}Mi"
+              cpu: {{ quote .Values.cpu }}
+              ram: {{ quote .Values.ram }}
             limits:
-              cpu: "{{ .Values.cpu }}m"
-              ram: "{{ .Values.ram }}Mi"
+              cpu: {{ quote .Values.cpu }}
+              ram: {{ quote .Values.ram }}
       restartPolicy: Never
