@@ -64,7 +64,7 @@ public class ApplicationMain implements QuarkusApplication {
 
                 return DistributionStatisticConfig.builder()
                     .percentilesHistogram(true)
-                    .percentiles(0., 0.33, 0.50, 0.66, 0.90, 0.95, 0.99, 0.999, 0.9999)
+                    .percentiles(0.0, 0.50, 0.90, 0.95, 0.99, 0.999, 0.9999)
                     .build()
                     .merge(config);
               }
