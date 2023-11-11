@@ -16,7 +16,7 @@ public class CouchbaseClusterBean {
     @Inject
     ClusterEnvironment clusterEnvironment;
 
-    @ConfigProperty(name="couchbaseConnectionString")
+    @ConfigProperty(name = "couchbaseConnectionString")
     String couchbaseConnectionString;
 
     @ConfigProperty(name = "couchbaseUsername", defaultValue = "pertaas_user")

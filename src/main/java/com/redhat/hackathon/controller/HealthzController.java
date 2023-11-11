@@ -1,4 +1,4 @@
-package com.redhat.hackathon;
+package com.redhat.hackathon.controller;
 
 import io.vertx.core.json.JsonObject;
 import jakarta.ws.rs.GET;

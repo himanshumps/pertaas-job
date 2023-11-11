@@ -12,9 +12,7 @@ import io.smallrye.common.annotation.RunOnVirtualThread;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
-import io.vertx.core.http.Http2Settings;
 import io.vertx.core.http.HttpHeaders;
-import io.vertx.core.http.HttpVersion;
 import io.vertx.core.net.OpenSSLEngineOptions;
 import io.vertx.core.tracing.TracingPolicy;
 import io.vertx.ext.web.client.HttpResponse;
@@ -28,9 +26,9 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Consumer to run HTTP/2 test
+ * Consumer for running the HTTP 1.0 and 1.1 tests
  */
-public class HTTPConsumerFor_2 {
+public class HTTPConsumerFor_1_x {
 
     @Inject
     Vertx vertx;
@@ -44,11 +42,11 @@ public class HTTPConsumerFor_2 {
     private static AtomicInteger initCounter = new AtomicInteger(0);
     private static RateLimiter rateLimiter = null;
 
-
     private long endTime;
 
-    @ConsumeEvent(value = "http_2_consumer")
-    @RunOnVirtualThread // Quarkus + Java 21 feature
+
+    @ConsumeEvent(value = "http_1.x_consumer")
+    @RunOnVirtualThread // Java 21 + Quarkus feature to run on virtual thread
     public void consume(RequestModel requestModel) {
         if (initCounter.incrementAndGet() == 1) {
             rateLimiter = RateLimiter.of(jobId, RateLimiterConfig.custom()
@@ -59,34 +57,22 @@ public class HTTPConsumerFor_2 {
         }
         // Webclient needs to be created in consume method.
         // We want to run as many connections as specified in maxConnections to ensure that we have that many connection open
-        // As this is for HTTP 2.x, we ant to upgrade to HTTP/2 if the server supports it
+        // As this is for HTTP 1.x, we do not want to upgrade to HTTP/2 even though the server supports it
         WebClient webClient = WebClient.create(vertx, new WebClientOptions()
-                .setUseAlpn(true)
+                .setUseAlpn(false)
                 .setTcpFastOpen(true)
                 .setTcpQuickAck(true)
                 .setTcpKeepAlive(true)
-                .setReusePort(false)
                 .setTracingPolicy(TracingPolicy.IGNORE)
-                .setProtocolVersion(HttpVersion.HTTP_2)
-                .setHttp2ClearTextUpgrade(true)
-                .setInitialSettings(new Http2Settings()
-                        .setHeaderTableSize(requestModel.getHeaderTableSize())
-                        .setMaxConcurrentStreams(requestModel.getMaxConcurrentStreams())
-                        .setInitialWindowSize(requestModel.getInitialWindowSize())
-                        .setMaxFrameSize(requestModel.getMaxFrameSize())
-                        .setMaxHeaderListSize(requestModel.getMaxHeaderListSize()))
+                .setProtocolVersion(requestModel.getHttpVersion())
                 .setEnabledSecureTransportProtocols(Set.of("TLSv1.2"))
                 .setSslEngineOptions(new OpenSSLEngineOptions().setUseWorkerThread(true).setSessionCacheEnabled(false))
-                .setMaxPoolSize(1)
-                .setHttp2MaxPoolSize(1)
-        );
+                .setMaxPoolSize(1));
         HttpRequestSupplier httpRequestSupplier = httpRequestSupplierParameterized.getSupplier(requestModel, webClient);
         endTime = requestModel.getEndTime();
-        // Run the loop for max concurrent streams to use all of them
-        for (int i = 0; i < requestModel.getMaxConcurrentStreams(); i++) {
-            runTest(webClient, httpRequestSupplier);
-        }
+        runTest(webClient, httpRequestSupplier);
     }
+
 
     void runTest(WebClient webClient, HttpRequestSupplier httpRequestSupplier) {
         //Log.info("runTest | The thread name is: " + Thread.currentThread().getName());
@@ -103,7 +89,7 @@ public class HTTPConsumerFor_2 {
             future.onComplete(h -> Thread.ofVirtual().start(() -> runTest(webClient, httpRequestSupplier)));
         } else {
             HttpRequestAndBodyModel httpRequestAndBodyModel = httpRequestSupplier.get();
-            // Sending last message with connection close to cleanup the underlying socket connection
+            // Sending last message with connection close to clean up the underlying socket connection
             httpRequestAndBodyModel
                     .httpRequest()
                     .putHeader(HttpHeaders.CONNECTION.toString(), "close")

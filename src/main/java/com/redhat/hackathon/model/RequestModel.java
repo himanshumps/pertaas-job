@@ -6,10 +6,13 @@ import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.http.HttpVersion;
 
 import java.util.List;
+
+/**
+ * The request JSON that needs to be posted for the application functionality.
+ * This is just a generic format and can be changed as per the needs.
+ */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class RequestModel {
-
-    String key_tx;
     String protocol;
     String hostname;
     int counter;
@@ -27,14 +30,6 @@ public class RequestModel {
     HttpVersion httpVersion;
     int requestPerSecond;
     List<HttpRequestModel> httpRequests;
-
-    public String getKey_tx() {
-        return key_tx;
-    }
-
-    public void setKey_tx(String key_tx) {
-        this.key_tx = key_tx;
-    }
 
     public String getProtocol() {
         return protocol;

@@ -1,4 +1,4 @@
-package com.redhat.hackathon;
+package com.redhat.hackathon.bean;
 
 import com.couchbase.client.java.Bucket;
 import com.couchbase.client.java.Cluster;
@@ -22,14 +22,17 @@ public class StartupAndStopEventBean {
     @Inject
     ClusterEnvironment clusterEnvironment;
 
+    // Initialize couchbase on startup
     void onStart(@Observes StartupEvent ev) {
         Log.info("The couchbase connection is being initiated");
         bucket.getClass();
         Log.info("The couchbase connection has being initiated");
     }
+
+    // Shutdown the couchbase client on shutdown
     void onStop(@Observes ShutdownEvent ev) {
         Log.info("The application is stopping...");
-        try{
+        try {
             cluster.disconnect(Duration.ofMinutes(1));
         } finally {
             clusterEnvironment.shutdown(Duration.ofMinutes(1));
