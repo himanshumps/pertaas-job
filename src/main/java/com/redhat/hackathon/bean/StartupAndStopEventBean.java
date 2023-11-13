@@ -22,7 +22,7 @@ public class StartupAndStopEventBean {
     @Inject
     ClusterEnvironment clusterEnvironment;
 
-    // Initialize couchbase on startup
+    // Initialize couchbase on startup. Could have done with @Startup but this gives more control.
     void onStart(@Observes StartupEvent ev) {
         Log.info("The couchbase connection is being initiated");
         bucket.getClass();

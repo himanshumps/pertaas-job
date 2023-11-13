@@ -70,7 +70,15 @@ public class ApplicationMain implements QuarkusApplication {
                             }
                         }
                 );
-        RequestModel requestModel = Json.decodeValue(requestJson, RequestModel.class);
+        RequestModel requestModel = null;
+        try{
+            requestModel = Json.decodeValue(requestJson, RequestModel.class);
+        } catch(Exception e) {
+            Log.error("There was an issue parsing the json. Exiting", e);
+            Quarkus.asyncExit();
+        }
+        String json_key_tx = jobId + "::REQUEST_JSON";
+        bucket.defaultCollection().reactive().upsert(json_key_tx, com.couchbase.client.java.json.JsonObject.fromJson(new JsonObject(requestJson).put("key_tx", json_key_tx).encode())).subscribe();
         requestModel.setEndTime(System.currentTimeMillis() + Duration.ofSeconds(requestModel.getRunDurationInSeconds()).toMillis());
         String consumer = "http_1.x_consumer";
         if (requestModel.getHttpVersion() == null) {
@@ -82,7 +90,7 @@ public class ApplicationMain implements QuarkusApplication {
         for (int i = 0; i < requestModel.getMaxConnections(); i++) {
             eventBus.send(consumer, requestModel, new DeliveryOptions().setLocalOnly(true));
         }
-        // Publish the Simplemeyter registry result after the test
+        // Publish the Simple meter registry result after the test
         vertx.setTimer(Duration.ofSeconds(requestModel.getRunDurationInSeconds() + 5).toMillis(), handler -> {
             Log.info("SimpleMeterRegistry response: ");
             Metrics.globalRegistry.getRegistries().forEach(registry -> {
@@ -97,7 +105,6 @@ public class ApplicationMain implements QuarkusApplication {
                     bucket.defaultCollection().upsert(key_tx, com.couchbase.client.java.json.JsonObject.fromJson(jsonObject.encode()));
                     Log.info(jsonObject.encode());
                     Quarkus.asyncExit();
-
                 }
             });
         });
