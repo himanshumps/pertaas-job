@@ -61,6 +61,7 @@ public class HTTPConsumerFor_1_x {
                 .setTcpKeepAlive(true)
                 .setTracingPolicy(TracingPolicy.IGNORE)
                 .setProtocolVersion(requestModel.getHttpVersion())
+                .setHttp2ClearTextUpgrade(false)
                 .setEnabledSecureTransportProtocols(Set.of("TLSv1.2"))
                 .setSslEngineOptions(new OpenSSLEngineOptions().setUseWorkerThread(true).setSessionCacheEnabled(false))
                 .setMaxPoolSize(1));
