@@ -1,6 +1,8 @@
 package com.redhat.hackathon.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import io.vertx.core.http.Http2Settings;
 import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.http.HttpVersion;
@@ -12,32 +14,26 @@ import java.util.List;
  * This is just a generic format and can be changed as per the needs.
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class RequestModel {
-    String protocol;
     String hostname;
-    int counter;
     int port;
     boolean ssl = false;
-    private long headerTableSize = Http2Settings.DEFAULT_HEADER_TABLE_SIZE;
-    private long maxConcurrentStreams = HttpServerOptions.DEFAULT_INITIAL_SETTINGS_MAX_CONCURRENT_STREAMS;
-    private int initialWindowSize = Http2Settings.DEFAULT_INITIAL_WINDOW_SIZE;
-    private int maxFrameSize = Http2Settings.DEFAULT_MAX_FRAME_SIZE;
-    private long maxHeaderListSize = Http2Settings.DEFAULT_MAX_HEADER_LIST_SIZE;
+    private Long headerTableSize = Http2Settings.DEFAULT_HEADER_TABLE_SIZE;
+    private Long maxConcurrentStreams = HttpServerOptions.DEFAULT_INITIAL_SETTINGS_MAX_CONCURRENT_STREAMS;
+    private Integer initialWindowSize = Http2Settings.DEFAULT_INITIAL_WINDOW_SIZE;
+    private Integer maxFrameSize = Http2Settings.DEFAULT_MAX_FRAME_SIZE;
+    private Integer maxHeaderListSize = Http2Settings.DEFAULT_MAX_HEADER_LIST_SIZE;
     int maxConnections;
     int runDurationInSeconds;
+
     long startTime;
+
     long endTime;
     HttpVersion httpVersion;
     int requestPerSecond;
     List<HttpRequestModel> httpRequests;
 
-    public String getProtocol() {
-        return protocol;
-    }
-
-    public void setProtocol(String protocol) {
-        this.protocol = protocol;
-    }
 
     public String getHostname() {
         return hostname;
@@ -45,14 +41,6 @@ public class RequestModel {
 
     public void setHostname(String hostname) {
         this.hostname = hostname;
-    }
-
-    public int getCounter() {
-        return counter;
-    }
-
-    public void setCounter(int counter) {
-        this.counter = counter;
     }
 
     public int getPort() {
@@ -71,43 +59,43 @@ public class RequestModel {
         this.ssl = ssl;
     }
 
-    public long getHeaderTableSize() {
-        return headerTableSize;
+    public Long getHeaderTableSize() {
+        return getHttpVersion().equals(HttpVersion.HTTP_2) ?  headerTableSize : null;
     }
 
-    public void setHeaderTableSize(long headerTableSize) {
+    public void setHeaderTableSize(Long headerTableSize) {
         this.headerTableSize = headerTableSize;
     }
 
-    public long getMaxConcurrentStreams() {
-        return maxConcurrentStreams;
+    public Long getMaxConcurrentStreams() {
+        return getHttpVersion().equals(HttpVersion.HTTP_2) ? maxConcurrentStreams : null;
     }
 
-    public void setMaxConcurrentStreams(long maxConcurrentStreams) {
+    public void setMaxConcurrentStreams(Long maxConcurrentStreams) {
         this.maxConcurrentStreams = maxConcurrentStreams;
     }
 
-    public int getInitialWindowSize() {
-        return initialWindowSize;
+    public Integer getInitialWindowSize() {
+        return getHttpVersion().equals(HttpVersion.HTTP_2) ? initialWindowSize : null;
     }
 
-    public void setInitialWindowSize(int initialWindowSize) {
+    public void setInitialWindowSize(Integer initialWindowSize) {
         this.initialWindowSize = initialWindowSize;
     }
 
-    public int getMaxFrameSize() {
-        return maxFrameSize;
+    public Integer getMaxFrameSize() {
+        return getHttpVersion().equals(HttpVersion.HTTP_2) ? maxFrameSize : null;
     }
 
-    public void setMaxFrameSize(int maxFrameSize) {
+    public void setMaxFrameSize(Integer maxFrameSize) {
         this.maxFrameSize = maxFrameSize;
     }
 
-    public long getMaxHeaderListSize() {
-        return maxHeaderListSize;
+    public Integer getMaxHeaderListSize() {
+        return getHttpVersion().equals(HttpVersion.HTTP_2) ? maxHeaderListSize : null;
     }
 
-    public void setMaxHeaderListSize(long maxHeaderListSize) {
+    public void setMaxHeaderListSize(Integer maxHeaderListSize) {
         this.maxHeaderListSize = maxHeaderListSize;
     }
 

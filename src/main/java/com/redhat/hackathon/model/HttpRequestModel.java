@@ -1,6 +1,7 @@
 package com.redhat.hackathon.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import io.vertx.core.buffer.Buffer;
 
 import java.util.Map;
@@ -16,6 +17,7 @@ import java.util.Map;
  * @param body        The HTTP body to be sent
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public record HttpRequestModel(String method, String uri, Map<String, String> headers, Map<String, String> queryParams,
                                Map<String, String> pathParams, Buffer body) {
 }
