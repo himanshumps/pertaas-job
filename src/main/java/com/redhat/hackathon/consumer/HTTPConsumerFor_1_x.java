@@ -30,18 +30,14 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class HTTPConsumerFor_1_x {
 
-    @Inject
-    Vertx vertx;
-
-    @Inject
-    HTTPRequestSupplierParameterized httpRequestSupplierParameterized;
-
-    @ConfigProperty(name = "jobId")
-    String jobId;
-
     private static AtomicInteger initCounter = new AtomicInteger(0);
     private static RateLimiter rateLimiter = null;
-
+    @Inject
+    Vertx vertx;
+    @Inject
+    HTTPRequestSupplierParameterized httpRequestSupplierParameterized;
+    @ConfigProperty(name = "jobId")
+    String jobId;
     private long endTime;
 
 

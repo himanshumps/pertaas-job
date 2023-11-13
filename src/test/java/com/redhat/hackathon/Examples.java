@@ -35,7 +35,7 @@ public class Examples {
         requestModel.setPort(443); // ssl port
         requestModel.setRunDurationInSeconds(5 * 60); // 5 minutes in seconds
         requestModel.setHttpRequests(List.of(new HttpRequestModel(HttpMethod.GET.name(), "/healthz", null, null, null, null),
-                new HttpRequestModel(HttpMethod.POST.name(), "/healthz", null, null, null, Buffer.buffer("${{guid}}"))));
+                new HttpRequestModel(HttpMethod.POST.name(), "/healthz", null, null, null, Buffer.buffer("This is the sample ${{guid}}"))));
         System.out.println("Call two endpoint (GET and POST) using HTTP 1.1 with 10 connection using ssl: " + Json.encode(requestModel));
 
         // Call two GET endpoint using path param. The metrics will be collated based on path provided and run for 5 minutes

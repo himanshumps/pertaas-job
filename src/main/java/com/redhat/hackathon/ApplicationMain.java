@@ -71,9 +71,9 @@ public class ApplicationMain implements QuarkusApplication {
                         }
                 );
         RequestModel requestModel = null;
-        try{
+        try {
             requestModel = Json.decodeValue(requestJson, RequestModel.class);
-        } catch(Exception e) {
+        } catch (Exception e) {
             Log.error("There was an issue parsing the json. Exiting", e);
             Quarkus.asyncExit();
         }

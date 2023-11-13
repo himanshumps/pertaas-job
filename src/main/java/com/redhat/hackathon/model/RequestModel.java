@@ -1,6 +1,5 @@
 package com.redhat.hackathon.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.vertx.core.http.Http2Settings;
@@ -19,21 +18,18 @@ public class RequestModel {
     String hostname;
     int port;
     boolean ssl = false;
+    int maxConnections;
+    int runDurationInSeconds;
+    long startTime;
+    long endTime;
+    HttpVersion httpVersion;
+    int requestPerSecond;
+    List<HttpRequestModel> httpRequests;
     private Long headerTableSize = Http2Settings.DEFAULT_HEADER_TABLE_SIZE;
     private Long maxConcurrentStreams = HttpServerOptions.DEFAULT_INITIAL_SETTINGS_MAX_CONCURRENT_STREAMS;
     private Integer initialWindowSize = Http2Settings.DEFAULT_INITIAL_WINDOW_SIZE;
     private Integer maxFrameSize = Http2Settings.DEFAULT_MAX_FRAME_SIZE;
     private Integer maxHeaderListSize = Http2Settings.DEFAULT_MAX_HEADER_LIST_SIZE;
-    int maxConnections;
-    int runDurationInSeconds;
-
-    long startTime;
-
-    long endTime;
-    HttpVersion httpVersion;
-    int requestPerSecond;
-    List<HttpRequestModel> httpRequests;
-
 
     public String getHostname() {
         return hostname;
@@ -60,7 +56,7 @@ public class RequestModel {
     }
 
     public Long getHeaderTableSize() {
-        return getHttpVersion().equals(HttpVersion.HTTP_2) ?  headerTableSize : null;
+        return getHttpVersion().equals(HttpVersion.HTTP_2) ? headerTableSize : null;
     }
 
     public void setHeaderTableSize(Long headerTableSize) {
