@@ -63,7 +63,7 @@ public class Examples {
         requestModel.setHttpRequests(List.of(new HttpRequestModel(HttpMethod.GET.name(), "/healthz/{healthEndpoint}", null, null, Map.of("healthEndpoint", "1"), null),
                 new HttpRequestModel(HttpMethod.GET.name(), "/healthz/{healthEndpoint}", null, null, Map.of("healthEndpoint", "2"), null)));
         System.out.println("Limit 1000 rps and run for 3 minutes: " + removeStartTimeAndEndTime(requestModel));
-// Call using the service url with non ssl, 20 connection and run for 3 minutes
+        // Call using the service url with non ssl, 20 connection and run for 3 minutes
         requestModel = new RequestModel();
         requestModel.setHttpVersion(HttpVersion.HTTP_1_1); // Use protocol 1.1
         requestModel.setSsl(false); // Use SSL
