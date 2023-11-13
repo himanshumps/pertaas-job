@@ -56,7 +56,7 @@ public class Examples {
         requestModel.setHttpVersion(HttpVersion.HTTP_1_1); // Use protocol 1.1
         requestModel.setSsl(true); // Use SSL
         requestModel.setMaxConnections(30); // Always keep 30 connection open
-        requestModel.setRequestPerSecond(1000); // 1000  rate limit
+        requestModel.setRequestPerSecond(1000); // 1000 rps rate limit
         requestModel.setHostname("<provide hostname here>");
         requestModel.setPort(443); // ssl port
         requestModel.setRunDurationInSeconds(5 * 60); // 5 minutes in seconds
@@ -78,7 +78,7 @@ public class Examples {
 
         // Call using HTTP/2 and 20 max streams and run for 5 minutes
         requestModel = new RequestModel();
-        requestModel.setHttpVersion(HttpVersion.HTTP_2); // Use protocol 1.1
+        requestModel.setHttpVersion(HttpVersion.HTTP_2); // Use protocol HTTP/2
         requestModel.setSsl(true); // Use SSL
         requestModel.setMaxConnections(20); // Always keep 20 connection open
         requestModel.setMaxConcurrentStreams(20L); // 20 streams

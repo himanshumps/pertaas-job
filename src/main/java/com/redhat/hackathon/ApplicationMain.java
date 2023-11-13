@@ -92,7 +92,7 @@ public class ApplicationMain implements QuarkusApplication {
         }
         // Publish the Simple meter registry result after the test
         vertx.setTimer(Duration.ofSeconds(requestModel.getRunDurationInSeconds() + 5).toMillis(), handler -> {
-            Log.info("SimpleMeterRegistry response: ");
+            Log.info("SimpleMeterRegistry response");
             Metrics.globalRegistry.getRegistries().forEach(registry -> {
                 if (registry instanceof SimpleMeterRegistry) {
                     Instant instant = Instant.now();
